@@ -197,8 +197,9 @@ export default class ScrollAnimation extends Component {
 
   render() {
     var classes = this.props.className ? `${this.props.className} ${this.state.classes}` : this.state.classes;
+    var style = this.props.noInlineCss ? {} : Object.assign({}, this.state.style, this.props.style);
     return (
-      <div ref={(node) => { this.node = node; }} className={classes} style={Object.assign({}, this.state.style, this.props.style)}>
+      <div ref={(node) => { this.node = node; }} className={classes} style={style}>
         {this.props.children}
       </div>
     );
@@ -213,6 +214,7 @@ ScrollAnimation.defaultProps = {
   animateOnce: false,
   animatePreScroll: true,
   animatedName: "animated",
+  noInlineCss: false
 };
 
 ScrollAnimation.propTypes = {
@@ -227,5 +229,6 @@ ScrollAnimation.propTypes = {
   style: PropTypes.object,
   scrollableParentSelector: PropTypes.string,
   className: PropTypes.string,
-  animatePreScroll: PropTypes.bool
+  animatePreScroll: PropTypes.bool,
+  noInlineCss: PropTypes.bool,
 };
