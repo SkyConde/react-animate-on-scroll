@@ -3,15 +3,19 @@ import throttle from "lodash.throttle";
 import PropTypes from "prop-types";
 
 export default class ScrollAnimation extends Component {
-
   constructor(props) {
     super(props);
+
+    this.node = React.createRef();
+
     this.serverSide = typeof window === "undefined";
     this.listener = throttle(this.handleScroll.bind(this), 50);
     this.visibility = {
       onScreen: false,
       inViewport: false
     };
+
+    console.log(this.props.animatedName);
 
     this.state = {
       classes: props.animatedName,
@@ -25,7 +29,7 @@ export default class ScrollAnimation extends Component {
   getElementTop(elm) {
     var yPos = 0;
     while (elm && elm.offsetTop !== undefined && elm.clientTop !== undefined) {
-      yPos += (elm.offsetTop + elm.clientTop);
+      yPos += elm.offsetTop + elm.clientTop;
       elm = elm.offsetParent;
     }
     return yPos;
@@ -50,7 +54,9 @@ export default class ScrollAnimation extends Component {
   }
 
   getViewportBottom() {
-    return this.getScrollPos() + this.getScrollableParentHeight() - this.props.offset;
+    return (
+      this.getScrollPos() + this.getScrollableParentHeight() - this.props.offset
+    );
   }
 
   isInViewport(y) {
@@ -66,12 +72,17 @@ export default class ScrollAnimation extends Component {
   }
 
   inViewport(elementTop, elementBottom) {
-    return this.isInViewport(elementTop) || this.isInViewport(elementBottom) ||
-      (this.isAboveViewport(elementTop) && this.isBelowViewport(elementBottom));
+    return (
+      this.isInViewport(elementTop) ||
+      this.isInViewport(elementBottom) ||
+      (this.isAboveViewport(elementTop) && this.isBelowViewport(elementBottom))
+    );
   }
 
   onScreen(elementTop, elementBottom) {
-    return !this.isAboveScreen(elementBottom) && !this.isBelowScreen(elementTop);
+    return (
+      !this.isAboveScreen(elementBottom) && !this.isBelowScreen(elementTop)
+    );
   }
 
   isAboveScreen(y) {
@@ -83,8 +94,10 @@ export default class ScrollAnimation extends Component {
   }
 
   getVisibility() {
-    const elementTop = this.getElementTop(this.node) - this.getElementTop(this.scrollableParent);
-    const elementBottom = elementTop + this.node.clientHeight;
+    const elementTop =
+      this.getElementTop(this.node.current) -
+      this.getElementTop(this.scrollableParent);
+    const elementBottom = elementTop + this.node.current.clientHeight;
     return {
       inViewport: this.inViewport(elementTop, elementBottom),
       onScreen: this.onScreen(elementTop, elementBottom)
@@ -92,13 +105,17 @@ export default class ScrollAnimation extends Component {
   }
 
   componentDidMount() {
-    if(!this.serverSide) {
-      const parentSelector = this.props.scrollableParentSelector
-      this.scrollableParent = parentSelector ? document.querySelector(parentSelector) : window;
+    if (!this.serverSide) {
+      const parentSelector = this.props.scrollableParentSelector;
+      this.scrollableParent = parentSelector
+        ? document.querySelector(parentSelector)
+        : window;
       if (this.scrollableParent && this.scrollableParent.addEventListener) {
         this.scrollableParent.addEventListener("scroll", this.listener);
       } else {
-        console.warn(`Cannot find element by locator: ${this.props.scrollableParentSelector}`);
+        console.warn(
+          `Cannot find element by locator: ${this.props.scrollableParentSelector}`
+        );
       }
       if (this.props.animatePreScroll) {
         this.handleScroll();
@@ -115,15 +132,17 @@ export default class ScrollAnimation extends Component {
   }
 
   visibilityHasChanged(previousVis, currentVis) {
-    return previousVis.inViewport !== currentVis.inViewport ||
-      previousVis.onScreen !== currentVis.onScreen;
+    return (
+      previousVis.inViewport !== currentVis.inViewport ||
+      previousVis.onScreen !== currentVis.onScreen
+    );
   }
 
   animate(animation, callback) {
     this.delayedAnimationTimeout = setTimeout(() => {
       this.animating = true;
       this.setState({
-        classes: `animated ${animation}`,
+        classes: `${this.props.animatedName} ${animation}`,
         style: {
           animationDuration: `${this.props.duration}s`
         }
@@ -187,7 +206,12 @@ export default class ScrollAnimation extends Component {
           });
         } else if (currentVis.inViewport && this.props.animateIn) {
           this.animateIn(this.props.afterAnimatedIn);
-        } else if (currentVis.onScreen && this.visibility.inViewport && this.props.animateOut && this.state.style.opacity === 1) {
+        } else if (
+          currentVis.onScreen &&
+          this.visibility.inViewport &&
+          this.props.animateOut &&
+          this.state.style.opacity === 1
+        ) {
           this.animateOut(this.props.afterAnimatedOut);
         }
         this.visibility = currentVis;
@@ -196,10 +220,14 @@ export default class ScrollAnimation extends Component {
   }
 
   render() {
-    var classes = this.props.className ? `${this.props.className} ${this.state.classes}` : this.state.classes;
-    var style = this.props.noInlineCss ? {} : Object.assign({}, this.state.style, this.props.style);
+    var classes = this.props.className
+      ? `${this.props.className} ${this.state.classes}`
+      : this.state.classes;
+    var style = this.props.noInlineCss
+      ? {}
+      : Object.assign({}, this.state.style, this.props.style);
     return (
-      <div ref={(node) => { this.node = node; }} className={classes} style={style}>
+      <div ref={this.node} className={classes} style={style}>
         {this.props.children}
       </div>
     );
@@ -230,5 +258,5 @@ ScrollAnimation.propTypes = {
   scrollableParentSelector: PropTypes.string,
   className: PropTypes.string,
   animatePreScroll: PropTypes.bool,
-  noInlineCss: PropTypes.bool,
+  noInlineCss: PropTypes.bool
 };
